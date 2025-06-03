@@ -40,7 +40,7 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-app.get("/api", (req, res) => {
+app.get("/gateway-health", (req, res) => {
   res.send({ message: "Welcome to api-gateway!" });
 });
 
@@ -49,6 +49,6 @@ app.use("/", proxy("http://localhost:6001"));
 
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
-  console.log(`Listening at http://localhost:${port}/api`);
+  console.log(`Listening at http://localhost:${port}/gateway-health`);
 });
 server.on("error", console.error);
