@@ -10,4 +10,5 @@ This is a sample README file for the eShop project.
 // 6. First Lesson: 1:58
 // 7. First Lesson: 2:09
 // 7. First Lesson: 2:35
+// 7. First Lesson: 2:47
 */

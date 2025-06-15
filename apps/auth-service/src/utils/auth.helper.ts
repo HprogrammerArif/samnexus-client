@@ -34,18 +34,42 @@ export const checkOtpRestrictions = async (
   if (await redis.get(`otp_lock:${email}`)) {
     return next(
       new ValidationError(
-        "Account is locked due to multiple failed OTP attempts. Please try again 30 minutes later."
+        "Account is locked due to multiple failed OTP attempts. Please try again after 30 minutes later."
       )
     );
-
-    if (await redis.get(`otp_spam_lock:${email}`)) {
-      return next(
-        new ValidationError(
-          "Too many otp requests. Please wait 1 hour before trying again."
-        )
-      );
-    }
   }
+
+  if (await redis.get(`otp_spam_lock:${email}`)) {
+    return next(
+      new ValidationError(
+        "Too many otp requests. Please wait 1 hour before trying again."
+      )
+    );
+  }
+
+  if (await redis.get(`otp_cooldown:${email}`)) {
+    return next(
+      new ValidationError(
+        "Please wait 1 minute before requesting a new OTP."
+      )
+    );
+  }
+};
+
+
+export const trackOtpRequests = async (email: string, next: NextFunction) => {
+  const otpRequestKey = `otp_request_count:${email}`;
+  let otpRequests = parseInt((await redis.get(otpRequestKey)) || "0");
+
+  if (otpRequests >= 2) {
+    await redis.set(`otp_spam_lock:${email}`, "LOCKED", "EX", 3600); // Lock for 1 hour
+    return next(
+      new ValidationError(
+        "Too many OTP requests. Please wait 1 hour before trying again."
+      )
+    );
+  }
+  await redis.set(otpRequestKey, (otpRequests + 1).toString(), "EX", 3600); //track OTP requests for 1 hour
 };
 
 export const sendOtp = async (
